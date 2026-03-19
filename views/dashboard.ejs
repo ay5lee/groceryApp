@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - GroceryMate</title>
+  <link rel="stylesheet" href="<%= basePath %>/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <h2><i class="fas fa-shopping-bag"></i> GroceryMate</h2>
+      <div class="nav-menu">
+        <span><i class="fas fa-user-circle"></i> Welcome, <span id="username"></span> (<span id="role"></span>)</span>
+        <div class="nav-links">
+          <a href="#" id="dashboardLink" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
+          <a href="#" id="reportsLink" class="nav-link" style="display: none;"><i class="fas fa-chart-bar"></i> Reports</a>
+          <a href="#" id="usersLink" class="nav-link" style="display: none;"><i class="fas fa-users"></i> Users</a>
+          <a href="#" id="configLink" class="nav-link" style="display: none;"><i class="fas fa-cog"></i> Configuration</a>
+          <button id="logout" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div id="dashboardView" class="dashboard-container">
+    <div class="card balance-card" id="currentBalanceCard">
+      <h3><i class="fas fa-wallet"></i> Current Balance</h3>
+      <div class="balance-amount" id="currentBalanceValue">$0.00</div>
+      <div class="balance-meta" id="currentBalanceMeta">No transactions yet</div>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-history"></i> Transaction History</h3>
+      <div class="table-container">
+        <table id="transactionsTable">
+          <thead>
+            <tr>
+              <th><i class="fas fa-clock"></i> Date/Time</th>
+              <th><i class="fas fa-money-bill-wave"></i> Amount</th>
+              <th><i class="fas fa-tag"></i> Type</th>
+              <th><i class="fas fa-wallet"></i> Balance</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="transactionsCards" class="transactions-cards" style="display:none"></div>
+      </div>
+      <div id="transactionsPagination" class="pagination-controls"></div>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-plus-circle"></i> Add Transaction</h3>
+      <form id="transactionForm">
+        <div class="form-row">
+          <div class="input-group input-with-icon">
+            <i class="fas fa-calendar-alt"></i>
+            <label for="datetime">Date & Time</label>
+            <input type="datetime-local" id="datetime" required>
+          </div>
+          <div class="input-group input-with-icon">
+            <i class="fas fa-dollar-sign"></i>
+            <label for="amount">Amount</label>
+            <input type="number" step="0.01" id="amount" placeholder="0.00" required inputmode="decimal">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="input-group input-with-icon" id="typeGroup">
+            <i class="fas fa-list"></i>
+            <label for="type">Type</label>
+            <select id="type">
+              <option value="cash">Cash</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group input-with-icon">
+          <i class="fas fa-sticky-note"></i>
+          <label for="notes">Notes</label>
+          <textarea id="notes" placeholder="Add any additional notes"></textarea>
+        </div>
+        <div class="input-group input-with-icon">
+          <i class="fas fa-camera"></i>
+          <label for="receipt">Receipt Photo (optional)</label>
+          <input type="file" id="receipt" accept="image/*" capture="environment">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Add Transaction</button>
+      </form>
+    </div>
+  </div>
+  <div id="reportsView" class="dashboard-container" style="display: none;">
+    <div class="card">
+      <h3><i class="fas fa-chart-line"></i> Spending Reports</h3>
+      <div id="reportsContent">
+        <p>Loading reports...</p>
+      </div>
+    </div>
+  </div>
+  <div id="usersView" class="dashboard-container" style="display: none;">
+    <div class="card">
+      <h3><i class="fas fa-user-plus"></i> Add New User</h3>
+      <form id="userForm">
+        <div class="form-row">
+          <div class="input-group input-with-icon">
+            <i class="fas fa-user"></i>
+            <label for="newUsername">Username</label>
+            <input type="text" id="newUsername" placeholder="Username" required>
+          </div>
+          <div class="input-group input-with-icon">
+            <i class="fas fa-lock"></i>
+            <label for="newPassword">Password</label>
+            <input type="password" id="newPassword" placeholder="Password" required>
+          </div>
+          <div class="input-group input-with-icon">
+            <i class="fas fa-shield-alt"></i>
+            <label for="newRole">Role</label>
+            <select id="newRole" required>
+              <option value="admin">Admin</option>
+              <option value="helper">Helper</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top: 25px;"><i class="fas fa-plus"></i> Add User</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-users-cog"></i> User Management</h3>
+      <div id="usersContent">
+        <p>Loading users...</p>
+      </div>
+    </div>
+  </div>
+  <div id="configView" class="dashboard-container" style="display: none;">
+    <div class="card">
+      <h3><i class="fas fa-sliders-h"></i> Transaction Type Configuration</h3>
+      <form id="typeForm">
+        <div class="form-row">
+          <div class="input-group input-with-icon">
+            <i class="fas fa-tag"></i>
+            <label for="typeName">Type Name</label>
+            <input type="text" id="typeName" placeholder="e.g., dairy" required>
+          </div>
+          <div class="input-group input-with-icon">
+            <i class="fas fa-layer-group"></i>
+            <label for="typeCategory">Category</label>
+            <select id="typeCategory" required>
+              <option value="credit">Credit</option>
+              <option value="expense">Expense</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top: 25px;"><i class="fas fa-plus"></i> Add Type</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-list-check"></i> Available Transaction Types</h3>
+      <div id="configContent">
+        <p>Loading transaction types...</p>
+      </div>
+    </div>
+  </div>
+  <!-- Upload overlay: shown while a receipt photo is being compressed + uploaded -->
+  <div id="upload-overlay">
+    <div class="upload-spinner"></div>
+    <div class="upload-overlay-text">Uploading receipt…</div>
+  </div>
+  <script>window.APP_BASE_PATH = '<%= basePath %>';</script>
+  <script src="<%= basePath %>/script.js"></script>
+</body>
+</html>
