@@ -64,6 +64,42 @@ Important:
 - `docker-compose down -v` deletes the database volume
 - deleting the `uploads/` folder removes locally stored receipt files
 
+## Deployment Checklist
+
+Use this when updating the app on a machine that already has the project checked out.
+
+1. Pull the latest changes:
+
+	```bash
+	git pull origin main
+	```
+
+2. Rebuild and restart the containers:
+
+	```bash
+	docker-compose up --build -d
+	```
+
+3. Confirm the app started cleanly:
+
+	```bash
+	docker-compose logs app --tail=50
+	```
+
+4. Open the app:
+
+	```text
+	http://localhost:2000/grocerymate/
+	```
+
+5. Do not use `docker-compose down -v` unless you intentionally want to delete the database volume.
+
+6. If you need a clean stop without deleting data:
+
+	```bash
+	docker-compose down
+	```
+
 ## Local Development Without Docker
 
 1. Install dependencies:
