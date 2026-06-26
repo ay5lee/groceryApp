@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 -- Insert sample users (passwords are hashed)
 INSERT INTO users (username, password_hash, role) VALUES
-('admin', '$2a$10$oxvUskLDr6it6dQkZNMC7.qXBICy.lAXtjStB.G9XfUS3rYXPJybK', 'admin'),
+('admin', '$2a$10$wUXDkAcTYbRF9o.ifbUBtu5iQUd4.5pZYwn2dIGPA.ntUSrXp.8bS', 'admin'),
 ('helper', '$2a$10$ySD5fP13iEofXAU4ohzpkewpP1.mbNRlZqsV6dR3LnSjfB7QvwsiK', 'helper')
 ON CONFLICT (username) DO NOTHING;
 
