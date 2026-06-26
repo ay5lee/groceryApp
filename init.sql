@@ -1,12 +1,7 @@
 -- Database grocery_mate is already created by POSTGRES_DB
 
--- Drop tables if they exist
-DROP TABLE IF EXISTS transactions;
-DROP TABLE IF EXISTS transaction_types;
-DROP TABLE IF EXISTS users;
-
 -- Users table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(50) UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
@@ -14,7 +9,7 @@ CREATE TABLE users (
 );
 
 -- Transaction types table
-CREATE TABLE transaction_types (
+CREATE TABLE IF NOT EXISTS transaction_types (
   id SERIAL PRIMARY KEY,
   name VARCHAR(50) NOT NULL UNIQUE,
   category VARCHAR(20) NOT NULL CHECK (category IN ('credit', 'expense')),
@@ -22,7 +17,7 @@ CREATE TABLE transaction_types (
 );
 
 -- Transactions table
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
   id SERIAL PRIMARY KEY,
   datetime TIMESTAMP NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -35,7 +30,8 @@ CREATE TABLE transactions (
 -- Insert sample users (passwords are hashed)
 INSERT INTO users (username, password_hash, role) VALUES
 ('admin', '$2a$10$oxvUskLDr6it6dQkZNMC7.qXBICy.lAXtjStB.G9XfUS3rYXPJybK', 'admin'),
-('helper', '$2a$10$ySD5fP13iEofXAU4ohzpkewpP1.mbNRlZqsV6dR3LnSjfB7QvwsiK', 'helper');
+('helper', '$2a$10$ySD5fP13iEofXAU4ohzpkewpP1.mbNRlZqsV6dR3LnSjfB7QvwsiK', 'helper')
+ON CONFLICT (username) DO NOTHING;
 
 -- Insert default transaction types
 INSERT INTO transaction_types (name, category) VALUES
@@ -43,4 +39,5 @@ INSERT INTO transaction_types (name, category) VALUES
 ('vegetable', 'expense'),
 ('meat', 'expense'),
 ('fish', 'expense'),
-('other', 'expense');
+('other', 'expense')
+ON CONFLICT (name) DO NOTHING;
