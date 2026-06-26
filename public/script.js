@@ -607,25 +607,82 @@ async function loadReports() {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   const data = await response.json();
+
+  const months = [...new Set(data.monthly.map(r => r.month))];
+  const selectedMonth = months[0] || '';
+
   const reportsContent = document.getElementById('reportsContent');
   reportsContent.innerHTML = `
     <div class="report-summary">
       <div class="summary-item">
-        <h4>Total Cash</h4>
-        <p>$${data.totalGiven}</p>
+        <h4>All Time Cash</h4>
+        <p>$${Number(data.totalGiven).toFixed(2)}</p>
+      </div>
+      <div class="summary-item">
+        <h4>All Time Spent</h4>
+        <p>$${Number(data.totalSpent).toFixed(2)}</p>
+      </div>
+      <div class="summary-item">
+        <h4>Current Balance</h4>
+        <p>$${(Number(data.totalGiven) - Number(data.totalSpent)).toFixed(2)}</p>
+      </div>
+    </div>
+    <div class="month-report-section">
+      <div class="month-selector-row">
+        <h4>Monthly Breakdown</h4>
+        <select id="monthSelect" class="month-select">
+          ${months.map(m => `<option value="${m}">${formatMonthLabel(m)}</option>`).join('')}
+          ${months.length === 0 ? '<option value="">No data</option>' : ''}
+        </select>
+      </div>
+      <div id="monthReportContent"></div>
+    </div>
+  `;
+
+  document.getElementById('monthSelect').addEventListener('change', function () {
+    renderMonthReport(this.value, data);
+  });
+
+  if (selectedMonth) renderMonthReport(selectedMonth, data);
+}
+
+function formatMonthLabel(yyyymm) {
+  const [year, month] = yyyymm.split('-');
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+
+function renderMonthReport(month, data) {
+  const categories = data.monthly.filter(r => r.month === month);
+  const givenRow = data.monthlyGiven.find(r => r.month === month);
+  const monthSpent = categories.reduce((sum, r) => sum + Number(r.total), 0);
+  const monthGiven = givenRow ? Number(givenRow.total) : 0;
+  const monthBalance = monthGiven - monthSpent;
+
+  document.getElementById('monthReportContent').innerHTML = `
+    <div class="report-summary month-summary">
+      <div class="summary-item">
+        <h4>Cash Given</h4>
+        <p>$${monthGiven.toFixed(2)}</p>
       </div>
       <div class="summary-item">
         <h4>Total Spent</h4>
-        <p>$${data.totalSpent}</p>
+        <p>$${monthSpent.toFixed(2)}</p>
       </div>
       <div class="summary-item">
-        <h4>Remaining Balance</h4>
-        <p>$${data.totalGiven - data.totalSpent}</p>
+        <h4>Remaining</h4>
+        <p class="${monthBalance < 0 ? 'negative-balance' : ''}">$${monthBalance.toFixed(2)}</p>
       </div>
     </div>
-    <h4>Spending by Category</h4>
     <ul class="category-list">
-      ${data.byCategory.map(cat => `<li>${cat.type}: $${cat.total}</li>`).join('')}
+      ${categories.length > 0
+        ? categories.map(cat => `
+            <li>
+              <span>${cat.type.charAt(0).toUpperCase() + cat.type.slice(1)}</span>
+              <span>$${Number(cat.total).toFixed(2)}</span>
+            </li>`).join('')
+        : '<li><span>No expenses recorded</span><span>$0.00</span></li>'
+      }
     </ul>
   `;
 }

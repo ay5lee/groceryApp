@@ -509,6 +509,46 @@ input[type="number"] {
   border-bottom: none;
 }
 
+.month-report-section {
+  margin-top: 10px;
+}
+
+.month-selector-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.month-selector-row h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.month-select {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.month-summary {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.negative-balance {
+  color: #e74c3c !important;
+}
+
 #usersTable {
   width: 100%;
   border-collapse: collapse;

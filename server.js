@@ -182,15 +182,19 @@ route('delete', '/api/transactions/:id', authenticateToken, async (req, res) => 
 route('get', '/api/reports', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   try {
-    const result = await pool.query(
-      "SELECT t.type, SUM(t.amount) as total FROM transactions t WHERE t.type NOT IN ('given', 'cash') GROUP BY t.type ORDER BY t.type"
-    );
     const totalSpent = await pool.query("SELECT SUM(amount) as total FROM transactions WHERE type NOT IN ('given', 'cash')");
     const totalGiven = await pool.query("SELECT SUM(amount) as total FROM transactions WHERE type IN ('given', 'cash')");
+    const monthly = await pool.query(
+      "SELECT TO_CHAR(datetime AT TIME ZONE 'Asia/Hong_Kong', 'YYYY-MM') as month, type, SUM(amount) as total FROM transactions WHERE type NOT IN ('given', 'cash') GROUP BY month, type ORDER BY month DESC, type"
+    );
+    const monthlyGiven = await pool.query(
+      "SELECT TO_CHAR(datetime AT TIME ZONE 'Asia/Hong_Kong', 'YYYY-MM') as month, SUM(amount) as total FROM transactions WHERE type IN ('given', 'cash') GROUP BY month ORDER BY month DESC"
+    );
     res.json({
-      byCategory: result.rows,
       totalSpent: totalSpent.rows[0].total || 0,
-      totalGiven: totalGiven.rows[0].total || 0
+      totalGiven: totalGiven.rows[0].total || 0,
+      monthly: monthly.rows,
+      monthlyGiven: monthlyGiven.rows
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
