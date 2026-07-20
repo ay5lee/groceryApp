@@ -26,10 +26,25 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 if (BASE_PATH) {
   app.use(BASE_PATH, express.static('public'));
-  app.use(`${BASE_PATH}/uploads`, express.static(path.join(__dirname, 'uploads')));
+}
+
+// Serve receipt uploads only to authenticated users
+const serveAuthenticatedUploads = (req, res, next) => {
+  const token = req.query.token || req.header('Authorization')?.split(' ')[1];
+  if (!token) return res.status(401).send('Unauthorized');
+  try {
+    jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    return res.status(403).send('Forbidden');
+  }
+};
+
+app.use('/uploads', serveAuthenticatedUploads, express.static(path.join(__dirname, 'uploads')));
+if (BASE_PATH) {
+  app.use(`${BASE_PATH}/uploads`, serveAuthenticatedUploads, express.static(path.join(__dirname, 'uploads')));
 }
 app.set('view engine', 'ejs');
 app.locals.basePath = BASE_PATH;

@@ -33,7 +33,7 @@ function resolveReceiptUrl(url) {
 
 function buildReceiptLinkHtml(transaction) {
   if (!transaction.receipt_url) return '';
-  const receiptUrl = resolveReceiptUrl(transaction.receipt_url);
+  const receiptUrl = resolveReceiptUrl(transaction.receipt_url) + `?token=${encodeURIComponent(token)}`;
   return `<a class="receipt-link" href="${receiptUrl}" target="_blank" rel="noopener noreferrer"><i class="fas fa-receipt"></i> View receipt</a>`;
 }
 
