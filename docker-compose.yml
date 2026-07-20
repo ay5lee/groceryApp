@@ -16,8 +16,6 @@ services:
     depends_on:
       - db
     volumes:
-      - .:/app
-      - /app/node_modules
       - /mnt/groceryApp:/app/uploads/receipts
 
   db:
