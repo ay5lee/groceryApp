@@ -491,10 +491,10 @@ function displayTransactionsPage() {
             <div class="card-date">${dateStr} ${timeStr}</div>
             <div class="card-type">${typeLabel}</div>
           </div>
-        </div>
-        <div class="card-center">
-          <div class="card-amount"><strong>${sign}$${amountDisplay}</strong></div>
-          <div class="card-balance">$${balanceDisplay}</div>
+          <div class="card-right">
+            <div class="card-amount">${sign}$${amountDisplay}</div>
+            <div class="card-balance">Bal: $${balanceDisplay}</div>
+          </div>
         </div>
         <div class="card-notes" style="display:none">
           ${t.notes ? escapeHtml(t.notes) : '<em>No notes</em>'}

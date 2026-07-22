@@ -343,70 +343,69 @@ tbody tr.row-expense { border-left: 3px solid var(--danger); }
 .transactions-cards {
   display: none;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 12px;
 }
 
 .transaction-card {
   background: var(--card);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  padding: 14px 16px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 }
 
-.transaction-card.card-credit { border-left: 4px solid #38b2ac; }
-.transaction-card.card-expense { border-left: 4px solid var(--danger); }
+.transaction-card.card-credit { border-left: 3px solid #38b2ac; }
+.transaction-card.card-expense { border-left: 3px solid var(--danger); }
 
 .card-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
 }
 
-.card-left { flex: 1; }
-.card-date { font-size: 14px; font-weight: 600; color: var(--text); }
+.card-left { flex: 1; min-width: 0; }
+.card-date { font-size: 13px; font-weight: 500; color: var(--text); }
 .card-type {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
-  margin-top: 2px;
   text-transform: capitalize;
 }
 
-.card-right { text-align: right; flex-shrink: 0; }
-.card-amount { font-size: 17px; font-weight: 700; color: var(--text); }
-.card-balance { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.card-right { text-align: right; flex-shrink: 0; padding-left: 10px; }
+.card-amount { font-size: 15px; font-weight: 700; color: var(--text); }
+.card-balance { font-size: 11px; color: var(--muted); }
 
-.card-center { display: flex; flex-direction: column; gap: 2px; }
+.card-center { display: none; }
 
 .card-notes {
   font-size: 13px;
   color: var(--text-secondary);
-  padding-top: 10px;
+  padding-top: 8px;
+  margin-top: 8px;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   line-height: 1.5;
 }
 
-.card-actions { display: flex; justify-content: flex-end; }
+.card-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
 
 .btn-notes-toggle {
   background: none;
-  border: 1px solid var(--border);
+  border: none;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-family: inherit;
-  padding: 5px 12px;
-  border-radius: 20px;
+  padding: 2px 0;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: color 0.18s;
 }
-.btn-notes-toggle:hover { border-color: var(--primary); color: var(--primary); }
+.btn-notes-toggle:hover { color: var(--primary); }
 
 /* Switch between table/cards */
 @media (max-width: 767px) {
