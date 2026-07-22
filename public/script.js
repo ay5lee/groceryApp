@@ -33,8 +33,21 @@ function resolveReceiptUrl(url) {
 
 function buildReceiptLinkHtml(transaction) {
   if (!transaction.receipt_url) return '';
-  const receiptUrl = resolveReceiptUrl(transaction.receipt_url) + `?token=${encodeURIComponent(token)}`;
-  return `<a class="receipt-link" href="${receiptUrl}" target="_blank" rel="noopener noreferrer"><i class="fas fa-receipt"></i> View receipt</a>`;
+  const filename = transaction.receipt_url.split('/').pop();
+  const apiUrl = withBasePath(`/api/receipts/${encodeURIComponent(filename)}`);
+  return `<a class="receipt-link" href="#" onclick="openReceipt('${apiUrl}');return false;"><i class="fas fa-receipt"></i> View receipt</a>`;
+}
+
+async function openReceipt(apiUrl) {
+  try {
+    const res = await fetch(apiUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) { alert('Could not load receipt.'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch {
+    alert('Could not load receipt.');
+  }
 }
 
 // Compress an image File to JPEG before upload (max 1600px, quality 0.80)

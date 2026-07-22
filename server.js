@@ -30,22 +30,6 @@ if (BASE_PATH) {
   app.use(BASE_PATH, express.static('public'));
 }
 
-// Serve receipt uploads only to authenticated users
-const serveAuthenticatedUploads = (req, res, next) => {
-  const token = req.query.token || req.header('Authorization')?.split(' ')[1];
-  if (!token) return res.status(401).send('Unauthorized');
-  try {
-    jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    return res.status(403).send('Forbidden');
-  }
-};
-
-app.use('/uploads', serveAuthenticatedUploads, express.static(path.join(__dirname, 'uploads')));
-if (BASE_PATH) {
-  app.use(`${BASE_PATH}/uploads`, serveAuthenticatedUploads, express.static(path.join(__dirname, 'uploads')));
-}
 app.set('view engine', 'ejs');
 app.locals.basePath = BASE_PATH;
 
@@ -112,6 +96,16 @@ const route = (method, path, ...handlers) => {
 // Routes
 route('get', '/', (req, res) => {
   res.render('login');
+});
+
+// Serve receipt images — authenticated only, token stays in header not URL
+route('get', '/api/receipts/:filename', authenticateToken, (req, res) => {
+  const filename = path.basename(req.params.filename);
+  const filePath = path.join(RECEIPTS_DIR, filename);
+  if (!filePath.startsWith(RECEIPTS_DIR)) return res.status(400).send('Invalid path');
+  res.sendFile(filePath, err => {
+    if (err) res.status(404).send('Receipt not found');
+  });
 });
 
 route('get', '/dashboard', (req, res) => {
