@@ -16,7 +16,7 @@ services:
     depends_on:
       - db
     volumes:
-      - /mnt/groceryApp:/app/uploads/receipts
+      - ${RECEIPTS_PATH}:/app/uploads/receipts
 
   db:
     image: postgres:15
