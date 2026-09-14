@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build: .
@@ -13,12 +11,14 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=password
       - JWT_SECRET=your-super-secret-jwt-key
+      - WA_GATEWAY_URL=
+      - WA_GATEWAY_TOKEN=
+      - WA_GROUP_JID=
+      - APP_INTERNAL_URL=
     depends_on:
       - db
     volumes:
-      - .:/app
-      - /app/node_modules
-      - /mnt/groceryApp:/app/uploads/receipts
+      - ${RECEIPTS_PATH:-/mnt/groceryApp}:/app/uploads/receipts
 
   db:
     image: postgres:15
