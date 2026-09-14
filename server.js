@@ -114,6 +114,20 @@ route('get', '/api/receipts/:filename', authenticateToken, (req, res) => {
   });
 });
 
+// Temp receipt endpoint for WA-Gateway — short-lived signed token, no bearer auth needed
+route('get', '/api/receipts/temp/:token', (req, res) => {
+  try {
+    const payload = jwt.verify(req.params.token, JWT_SECRET);
+    if (payload.purpose !== 'wa-receipt') return res.status(403).send('Forbidden');
+    const filename = path.basename(payload.filename);
+    const filePath = path.join(RECEIPTS_DIR, filename);
+    if (!filePath.startsWith(RECEIPTS_DIR)) return res.status(400).send('Invalid path');
+    res.sendFile(filePath, err => { if (err) res.status(404).send('Receipt not found'); });
+  } catch {
+    res.status(403).send('Invalid or expired token');
+  }
+});
+
 route('get', '/dashboard', (req, res) => {
   res.render('dashboard');
 });
@@ -431,23 +445,32 @@ async function sendWhatsAppNotification(transaction, username, balance) {
 
   const headers = { 'Content-Type': 'application/json', 'X-Auth-Token': WA_GATEWAY_TOKEN };
 
+  const sendText = () => fetch(`${WA_GATEWAY_URL}/send_message`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ number: WA_GROUP_JID, message: text }),
+  });
+
   try {
     if (transaction.receipt_url && APP_INTERNAL_URL) {
-      const receiptUrl = `${APP_INTERNAL_URL}${transaction.receipt_url}`;
-      await fetch(`${WA_GATEWAY_URL}/send_image`, {
+      const filename = path.basename(transaction.receipt_url);
+      const tempToken = jwt.sign({ filename, purpose: 'wa-receipt' }, JWT_SECRET, { expiresIn: '2m' });
+      const receiptUrl = `${APP_INTERNAL_URL}/api/receipts/temp/${tempToken}`;
+      const res = await fetch(`${WA_GATEWAY_URL}/send_image`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ number: WA_GROUP_JID, url: receiptUrl, caption: text }),
       });
+      if (!res.ok) {
+        console.error(`WA send_image failed (${res.status}), falling back to text`);
+        await sendText();
+      }
     } else {
-      await fetch(`${WA_GATEWAY_URL}/send_message`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ number: WA_GROUP_JID, message: text }),
-      });
+      await sendText();
     }
   } catch (err) {
     console.error('WhatsApp notification failed:', err.message);
+    try { await sendText(); } catch { /* give up */ }
   }
 }
 
