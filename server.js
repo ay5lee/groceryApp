@@ -50,12 +50,6 @@ async function ensureSchemaCompat() {
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const CASH_ALIASES = new Set(['given', 'cash']);
-
-// WA-Gateway config
-const WA_GATEWAY_URL = (process.env.WA_GATEWAY_URL || '').replace(/\/+$/, '');
-const WA_GATEWAY_TOKEN = process.env.WA_GATEWAY_TOKEN || '';
-const WA_GROUP_JID = process.env.WA_GROUP_JID || '';
-const APP_INTERNAL_URL = (process.env.APP_INTERNAL_URL || '').replace(/\/+$/, '');
 const RECEIPTS_DIR = path.join(__dirname, 'uploads', 'receipts');
 
 fs.mkdirSync(RECEIPTS_DIR, { recursive: true });
@@ -177,9 +171,6 @@ route('post', '/api/transactions', authenticateToken, uploadReceipt.single('rece
       [datetime, amount, transactionType, notes, receiptUrl]
     );
     res.json(result.rows[0]);
-    sendWhatsAppNotification(result.rows[0], req.user.username).catch(err =>
-      console.error('WA notification error:', err.message)
-    );
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -406,43 +397,6 @@ app.use((err, req, res, next) => {
   }
   return next(err);
 });
-
-async function sendWhatsAppNotification(transaction, username) {
-  if (!WA_GATEWAY_URL || !WA_GATEWAY_TOKEN || !WA_GROUP_JID) return;
-
-  const sign = CASH_ALIASES.has(transaction.type) ? '+' : '-';
-  const dtStr = new Date(transaction.datetime).toLocaleString('en-HK', {
-    timeZone: 'Asia/Hong_Kong', dateStyle: 'short', timeStyle: 'short',
-  });
-
-  let text = `🛒 *GroceryMate*\n`;
-  text += `📅 ${dtStr}\n`;
-  text += `📌 Type: ${transaction.type}\n`;
-  text += `💵 Amount: ${sign}$${parseFloat(transaction.amount).toFixed(2)}\n`;
-  if (transaction.notes) text += `📝 Notes: ${transaction.notes}\n`;
-  text += `👤 Added by: ${username}`;
-
-  const headers = { 'Content-Type': 'application/json', 'X-Auth-Token': WA_GATEWAY_TOKEN };
-
-  try {
-    if (transaction.receipt_url && APP_INTERNAL_URL) {
-      const receiptUrl = `${APP_INTERNAL_URL}${transaction.receipt_url}`;
-      await fetch(`${WA_GATEWAY_URL}/send_image`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ number: WA_GROUP_JID, url: receiptUrl, caption: text }),
-      });
-    } else {
-      await fetch(`${WA_GATEWAY_URL}/send_message`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ number: WA_GROUP_JID, message: text }),
-      });
-    }
-  } catch (err) {
-    console.error('WhatsApp notification failed:', err.message);
-  }
-}
 
 // Start server
 async function startWithRetry(maxAttempts = 20, delayMs = 1500) {
