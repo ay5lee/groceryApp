@@ -3,6 +3,7 @@
 ## Unreleased
 ### Added
 - WhatsApp notification via WA-Gateway when a transaction is added (includes receipt image if present)
+- Current balance shown in WhatsApp notification message
 - Daily database backup sidecar container (keeps 7 most recent `.sql` files)
 - `RECEIPTS_PATH`, `DB_DATA_PATH`, `BACKUP_PATH` env vars for configurable host mount paths
 - `.env.example` documenting all environment variables

@@ -177,7 +177,13 @@ route('post', '/api/transactions', authenticateToken, uploadReceipt.single('rece
       [datetime, amount, transactionType, notes, receiptUrl]
     );
     res.json(result.rows[0]);
-    sendWhatsAppNotification(result.rows[0], req.user.username).catch(err =>
+    const balanceResult = await pool.query(`
+      SELECT SUM(CASE WHEN t.type = ANY($1) OR tt.category = 'credit' THEN t.amount ELSE -t.amount END) as balance
+      FROM transactions t
+      LEFT JOIN transaction_types tt ON t.type = tt.name
+    `, [Array.from(CASH_ALIASES)]);
+    const balance = parseFloat(balanceResult.rows[0].balance || 0).toFixed(2);
+    sendWhatsAppNotification(result.rows[0], req.user.username, balance).catch(err =>
       console.error('WA notification error:', err.message)
     );
   } catch (err) {
@@ -407,7 +413,7 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
-async function sendWhatsAppNotification(transaction, username) {
+async function sendWhatsAppNotification(transaction, username, balance) {
   if (!WA_GATEWAY_URL || !WA_GATEWAY_TOKEN || !WA_GROUP_JID) return;
 
   const sign = CASH_ALIASES.has(transaction.type) ? '+' : '-';
@@ -420,6 +426,7 @@ async function sendWhatsAppNotification(transaction, username) {
   text += `📌 Type: ${transaction.type}\n`;
   text += `💵 Amount: ${sign}$${parseFloat(transaction.amount).toFixed(2)}\n`;
   if (transaction.notes) text += `📝 Notes: ${transaction.notes}\n`;
+  if (balance !== undefined) text += `💰 Balance: $${balance}\n`;
   text += `👤 Added by: ${username}`;
 
   const headers = { 'Content-Type': 'application/json', 'X-Auth-Token': WA_GATEWAY_TOKEN };
