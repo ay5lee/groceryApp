@@ -4,6 +4,10 @@
 ### Added
 - WhatsApp notification via WA-Gateway when a transaction is added (includes receipt image if present)
 - Current balance shown in WhatsApp notification message
+
+### Fixed
+- WA receipt image attachment now works via a short-lived signed URL instead of failing with 404
+- WA notification falls back to text-only if image sending fails
 - Daily database backup sidecar container (keeps 7 most recent `.sql` files)
 - `RECEIPTS_PATH`, `DB_DATA_PATH`, `BACKUP_PATH` env vars for configurable host mount paths
 - `.env.example` documenting all environment variables
