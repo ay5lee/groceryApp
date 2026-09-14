@@ -8,13 +8,13 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=grocery_mate
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - JWT_SECRET=your-super-secret-jwt-key
-      - WA_GATEWAY_URL=
-      - WA_GATEWAY_TOKEN=
-      - WA_GROUP_JID=
-      - APP_INTERNAL_URL=
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - WA_GATEWAY_URL=${WA_GATEWAY_URL:-}
+      - WA_GATEWAY_TOKEN=${WA_GATEWAY_TOKEN:-}
+      - WA_GROUP_JID=${WA_GROUP_JID:-}
+      - APP_INTERNAL_URL=${APP_INTERNAL_URL:-}
     depends_on:
       - db
     volumes:
@@ -24,8 +24,8 @@ services:
     image: postgres:15
     environment:
       - POSTGRES_DB=grocery_mate
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
