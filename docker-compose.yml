@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build: .
@@ -10,9 +8,13 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=grocery_mate
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - JWT_SECRET=your-super-secret-jwt-key
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - WA_GATEWAY_URL=${WA_GATEWAY_URL:-}
+      - WA_GATEWAY_TOKEN=${WA_GATEWAY_TOKEN:-}
+      - WA_GROUP_JID=${WA_GROUP_JID:-}
+      - APP_INTERNAL_URL=${APP_INTERNAL_URL:-}
     depends_on:
       - db
     volumes:
@@ -22,13 +24,31 @@ services:
     image: postgres:15
     environment:
       - POSTGRES_DB=grocery_mate
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ${DB_DATA_PATH:-/opt/grocerymate/db}:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
-volumes:
-  postgres_data:
+  db-backup:
+    image: postgres:15
+    environment:
+      - PGPASSWORD=${DB_PASSWORD}
+      - PGUSER=${DB_USER:-postgres}
+    volumes:
+      - ${BACKUP_PATH:-/opt/grocerymate/backups}:/backups
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          sleep 86400
+          FILE=/backups/grocery_mate_$$(date +%Y%m%d_%H%M%S).sql
+          pg_dump -h db -U $$PGUSER grocery_mate > $$FILE && echo "Backup saved: $$FILE"
+          ls -t /backups/*.sql | tail -n +8 | xargs -r rm
+        done
+    depends_on:
+      - db
+    restart: unless-stopped
