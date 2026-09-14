@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2026-09-14
 ### Added
 - WhatsApp notification via WA-Gateway when a transaction is added (includes receipt image if present)
 - Current balance shown in WhatsApp notification message
