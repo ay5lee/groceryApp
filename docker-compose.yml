@@ -17,6 +17,8 @@ services:
       - APP_INTERNAL_URL=${APP_INTERNAL_URL:-}
     depends_on:
       - db
+    volumes:
+      - ${RECEIPTS_PATH}:/app/uploads/receipts
 
   db:
     image: postgres:15
