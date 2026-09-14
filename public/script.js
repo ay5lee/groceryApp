@@ -33,8 +33,21 @@ function resolveReceiptUrl(url) {
 
 function buildReceiptLinkHtml(transaction) {
   if (!transaction.receipt_url) return '';
-  const receiptUrl = resolveReceiptUrl(transaction.receipt_url);
-  return `<a class="receipt-link" href="${receiptUrl}" target="_blank" rel="noopener noreferrer"><i class="fas fa-receipt"></i> View receipt</a>`;
+  const filename = transaction.receipt_url.split('/').pop();
+  const apiUrl = withBasePath(`/api/receipts/${encodeURIComponent(filename)}`);
+  return `<a class="receipt-link" href="#" onclick="openReceipt('${apiUrl}');return false;"><i class="fas fa-receipt"></i> View receipt</a>`;
+}
+
+async function openReceipt(apiUrl) {
+  try {
+    const res = await fetch(apiUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) { alert('Could not load receipt.'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch {
+    alert('Could not load receipt.');
+  }
 }
 
 // Compress an image File to JPEG before upload (max 1600px, quality 0.80)
@@ -151,14 +164,35 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('reportsLink').style.display = 'inline';
       document.getElementById('usersLink').style.display = 'inline';
       document.getElementById('configLink').style.display = 'inline';
+      document.getElementById('reportsNavItem').style.display = 'flex';
+      document.getElementById('usersNavItem').style.display = 'flex';
+      document.getElementById('configNavItem').style.display = 'flex';
     }
-    
+
     loadTransactions();
-    // Ensure dashboard/cards align to navbar on load and resize
-    setTimeout(() => syncLayoutWithNav(), 80);
-    window.addEventListener('resize', () => debounceSyncLayout());
-    
-    // Navigation
+
+    // FAB / bottom sheet
+    const addSheet = document.getElementById('addSheet');
+    const sheetBackdrop = document.getElementById('sheetBackdrop');
+
+    function openSheet() {
+      addSheet.classList.add('open');
+      sheetBackdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSheet() {
+      addSheet.classList.remove('open');
+      sheetBackdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('fabAdd').addEventListener('click', openSheet);
+    document.getElementById('addTxnBtn').addEventListener('click', openSheet);
+    sheetBackdrop.addEventListener('click', closeSheet);
+    document.getElementById('cancelSheet').addEventListener('click', closeSheet);
+
+    // Desktop navigation
     document.getElementById('dashboardLink').addEventListener('click', (e) => {
       e.preventDefault();
       showView('dashboard');
@@ -173,11 +207,22 @@ document.addEventListener('DOMContentLoaded', () => {
       showView('users');
       loadUsers();
     });
-    
     document.getElementById('configLink').addEventListener('click', (e) => {
       e.preventDefault();
       showView('config');
       loadTransactionTypes();
+    });
+
+    // Bottom navigation
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const view = item.dataset.view;
+        showView(view);
+        if (view === 'reports') loadReports();
+        if (view === 'users') loadUsers();
+        if (view === 'config') loadTransactionTypes();
+      });
     });
     
     // User form handler
@@ -264,8 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok) {
           loadTransactions();
           transactionForm.reset();
-          // Reset datetime to current HKT
           document.getElementById('datetime').value = getHKTDatetime();
+          closeSheet();
         } else {
           const error = await response.json();
           alert('Error: ' + (error.error || 'Failed to add transaction'));
@@ -348,50 +393,17 @@ async function loadTransactionTypesForForm() {
   }
 }
 
-// Measure `.nav-container` and apply matching width/left margin to `.dashboard-container`
-function syncLayoutWithNav() {
-  try {
-    const nav = document.querySelector('.nav-container');
-    const dash = document.querySelector('.dashboard-container');
-    if (!nav || !dash) return;
-    const navRect = nav.getBoundingClientRect();
-    const computed = window.getComputedStyle(nav);
-
-    // Set dashboard to match nav's visual width (max-width) and center it
-    dash.style.maxWidth = navRect.width + 'px';
-    dash.style.width = '100%';
-    dash.style.margin = '12px auto';
-
-    // Mirror side padding from nav to keep visual alignment
-    dash.style.paddingLeft = computed.paddingLeft;
-    dash.style.paddingRight = computed.paddingRight;
-
-    // Ensure cards don't exceed container
-    document.querySelectorAll('.dashboard-container .card').forEach(c => {
-      c.style.maxWidth = '100%';
-      c.style.boxSizing = 'border-box';
-      c.style.marginLeft = '0';
-      c.style.marginRight = '0';
-    });
-  } catch (err) {
-    console.warn('syncLayoutWithNav error', err);
-  }
-}
-
-// Debounce helper for resize
-let __syncLayoutTimer = null;
-function debounceSyncLayout() {
-  if (__syncLayoutTimer) clearTimeout(__syncLayoutTimer);
-  __syncLayoutTimer = setTimeout(() => syncLayoutWithNav(), 120);
-}
-
 function showView(view) {
-  document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'grid' : 'none';
-  document.getElementById('reportsView').style.display = view === 'reports' ? 'grid' : 'none';
-  document.getElementById('usersView').style.display = view === 'users' ? 'grid' : 'none';
-  document.getElementById('configView').style.display = view === 'config' ? 'grid' : 'none';
-  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-  document.getElementById(view + 'Link').classList.add('active');
+  ['dashboard', 'reports', 'users', 'config'].forEach(v => {
+    const el = document.getElementById(v + 'View');
+    if (el) el.style.display = v === view ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const activeLink = document.getElementById(view + 'Link');
+  if (activeLink) activeLink.classList.add('active');
+  document.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
+  const activeNav = document.getElementById(view + 'NavItem');
+  if (activeNav) activeNav.classList.add('active');
 }
 
 async function loadTransactions() {
@@ -434,7 +446,7 @@ function displayTransactionsPage() {
   const cardsContainer = document.getElementById('transactionsCards');
   tbody.innerHTML = '';
   if (cardsContainer) cardsContainer.innerHTML = '';
-  const isMobile = window.matchMedia('(max-width: 414px)').matches;
+  const isMobile = window.matchMedia('(max-width: 767px)').matches;
   
   // Calculate pagination
   const totalPages = Math.ceil(allTransactions.length / itemsPerPage);
@@ -479,17 +491,17 @@ function displayTransactionsPage() {
             <div class="card-date">${dateStr} ${timeStr}</div>
             <div class="card-type">${typeLabel}</div>
           </div>
-        </div>
-        <div class="card-center">
-          <div class="card-amount"><strong>${sign}$${amountDisplay}</strong></div>
-          <div class="card-balance">$${balanceDisplay}</div>
+          <div class="card-right">
+            <div class="card-amount">${sign}$${amountDisplay}</div>
+            <div class="card-balance">Bal: $${balanceDisplay}</div>
+          </div>
         </div>
         <div class="card-notes" style="display:none">
           ${t.notes ? escapeHtml(t.notes) : '<em>No notes</em>'}
           ${buildReceiptLinkHtml(t)}
           ${role === 'admin' ? `<button class="btn btn-small action-btn notes-delete-btn" data-id="${t.id}" title="Delete"><i class="fas fa-trash"></i> Delete</button>` : ''}
         </div>
-        <div class="card-actions"><button class="btn btn-small toggle-notes">Notes</button></div>
+        <div class="card-actions"><button class="btn-notes-toggle toggle-notes">Notes</button></div>
       `;
 
       // Toggle notes
